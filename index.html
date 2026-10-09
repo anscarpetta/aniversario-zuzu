@@ -17,6 +17,7 @@
     --gold: #ffd166;
     --ink: #3b2440;
     --lh: 2.2rem; /* altura da linha do papel da cartinha */
+    --pw: min(340px, calc(100vw - 40px)); /* largura do player da música */
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
@@ -238,10 +239,11 @@
     bottom: calc(12px + env(safe-area-inset-bottom));
     z-index: 20;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: .6rem;
-    padding: 6px 12px 6px 6px;
-    border-radius: 14px;
+    gap: .4rem;
+    padding: 8px;
+    border-radius: 16px;
     background: rgba(20, 6, 30, .8);
     -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
@@ -250,10 +252,14 @@
     transition: transform .5s cubic-bezier(.2, .8, .2, 1);
   }
   .music.show { transform: none; }
-  .yt { width: 160px; height: 90px; overflow: hidden; border-radius: 9px; transition: width .4s, height .4s; }
-  .music.mini { gap: 0; padding-left: 12px; }
-  .music.mini .yt { width: 0; height: 30px; }
-  .music button { padding: .3rem 0; border: 0; background: none; color: #fff; font: 400 .85rem Poppins, system-ui, sans-serif; cursor: pointer; }
+  .yt { width: var(--pw); height: calc(var(--pw) * 9 / 16); overflow: hidden; border-radius: 10px; transition: width .4s, height .4s; }
+  .yt iframe { display: block; width: var(--pw); height: calc(var(--pw) * 9 / 16); }
+  .music.mini { gap: 0; padding: 4px 10px; }
+  .music.mini .yt { width: 0; height: 0; }
+  .music button { padding: .3rem .4rem; border: 0; background: none; color: #fff; font: 400 .95rem Poppins, system-ui, sans-serif; cursor: pointer; }
+  /* enquanto o player está aberto, sobe a mensagem pra ele não cobrir o botão da cartinha */
+  #message { transition: padding .4s; }
+  body:has(.music.show:not(.mini)) #message { padding-bottom: calc(var(--pw) * 9 / 16 + 90px); }
 
   /* ---------- animações ---------- */
   @keyframes twinkle { from { opacity: .35; } to { opacity: .9; } }
@@ -432,9 +438,11 @@
   let player;
   window.onYouTubeIframeAPIReady = () => {
     player = new YT.Player('yt-player', {
-      width: 160, height: 90, videoId: SONG,
+      width: 340, height: 191, videoId: SONG,
       playerVars: { playsinline: 1, loop: 1, playlist: SONG, rel: 0 },
       events: {
+        // se ela abriu a caixa antes do player carregar, tenta tocar assim que ficar pronto
+        onReady: () => { if (gift.classList.contains('open')) playMusic(); },
         onStateChange: e => {
           if (e.data !== YT.PlayerState.PLAYING) return;
           musicToggle.textContent = '🎵 Sparks · Coldplay';
