@@ -231,6 +231,30 @@
   .letter p { margin: 0 0 var(--lh); }
   .letter .sign { margin: 0; text-align: right; font: 700 1.9rem/var(--lh) "Dancing Script", cursive; color: #b3123f; }
 
+  /* ---------- música ---------- */
+  .music {
+    position: fixed;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: 6px 12px 6px 6px;
+    border-radius: 14px;
+    background: rgba(20, 6, 30, .8);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
+    transform: translateY(calc(100% + 40px));
+    transition: transform .5s cubic-bezier(.2, .8, .2, 1);
+  }
+  .music.show { transform: none; }
+  .yt { width: 160px; height: 90px; overflow: hidden; border-radius: 9px; transition: width .4s, height .4s; }
+  .music.mini { gap: 0; padding-left: 12px; }
+  .music.mini .yt { width: 0; height: 30px; }
+  .music button { padding: .3rem 0; border: 0; background: none; color: #fff; font: 400 .85rem Poppins, system-ui, sans-serif; cursor: pointer; }
+
   /* ---------- animações ---------- */
   @keyframes twinkle { from { opacity: .35; } to { opacity: .9; } }
   @keyframes pulse { 50% { opacity: .35; } }
@@ -293,14 +317,18 @@
     <article id="letter" class="letter" tabindex="-1">
       <!-- ✍️ CARTINHA: troque os parágrafos abaixo pelo seu texto (um <p> por parágrafo) -->
       <h2>Minha Zuzu,</h2>
-      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante venenatis dapibus. Curabitur blandit tempus porttitor, nullam quis risus eget urna mollis ornare vel eu leo. Donec ullamcorper nulla non metus auctor fringilla.</p>
-      <p>Vestibulum id ligula porta felis euismod semper. Cras mattis consectetur purus sit amet fermentum. Maecenas faucibus mollis interdum, aenean lacinia bibendum nulla sed consectetur. Sed posuere consectetur est at lobortis.</p>
-      <p>Etiam porta sem malesuada magna mollis euismod. Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
-      <p>Nulla vitae elit libero, a pharetra augue. Praesent commodo cursus magna, vel scelerisque nisl consectetur et. Feliz aniversário!</p>
+      <p>Venho escrever uma cartinha para Zuzu, para deseja-la felicitações!! kkkkkkk</p>
+      <p>Então amor, 20 ANOS wow, isso eh uma baita marca, assustadora, mas empolgante, estamos no auge da vida, mas nao gosto de pensar assim.... acho que o auge eh o agora, e ele foi e vai ser, entao garanta pra mim, que vai viver seu auge, a todo momento, e acho que isso eh o que mais importa pra ti, viva amor, nao deixe de viver por um segundo, e se se esquecer por um segundo, no proximo viva o dobro!</p>
+      <p>Feliz de compartilhar e viver esse marco contigo, eh uma baita conquista e sei que vc tem mto a conquistar como faria laimer, politica revolucionaria ou quem sabe professora ultra remunerada, o futuro nn tem controle do potencial que vc tem, e nao tenha duvidas disso, para cada vez que olhar para baixo de tristeza, saiba que todo o amor que vc carrega te ergue novamente para cima</p>
       <p class="sign">Com todo o meu amor,<br>Angelo</p>
     </article>
   </section>
 </main>
+
+<div id="music" class="music">
+  <div class="yt"><div id="yt-player"></div></div>
+  <button id="music-toggle" type="button">toque no ▶ pra ouvir 🎵</button>
+</div>
 
 <script>
   const $ = s => document.querySelector(s);
@@ -397,10 +425,39 @@
     else running = false;
   }
 
+  // ---------- música: "Sparks" (Coldplay, faixa oficial no YouTube), baixinha ----------
+  // ponytail: volume só funciona no desktop/Android; no iPhone o YouTube usa o volume do aparelho
+  const SONG = '1aokooixKIo', VOLUME = 20;
+  const music = $('#music'), musicToggle = $('#music-toggle');
+  let player;
+  window.onYouTubeIframeAPIReady = () => {
+    player = new YT.Player('yt-player', {
+      width: 160, height: 90, videoId: SONG,
+      playerVars: { playsinline: 1, loop: 1, playlist: SONG, rel: 0 },
+      events: {
+        onStateChange: e => {
+          if (e.data !== YT.PlayerState.PLAYING) return;
+          musicToggle.textContent = '🎵 Sparks · Coldplay';
+          setTimeout(() => music.classList.add('mini'), 3000);
+        },
+      },
+    });
+  };
+  // precisa rodar dentro do toque (sem await/timeout antes), senão o navegador bloqueia o som.
+  // se bloquear (iPhone), o mini player fica aberto pra ela tocar no ▶
+  function playMusic() {
+    music.classList.add('show');
+    if (!player || !player.playVideo) return;
+    player.setVolume(VOLUME);
+    player.playVideo();
+  }
+  musicToggle.addEventListener('click', () => music.classList.toggle('mini'));
+
   // ---------- roteiro ----------
   gift.addEventListener('click', () => {
     if (gift.classList.contains('open')) return;
     gift.classList.add('open');
+    playMusic();
     const r = gift.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height * .35;
     burst(x, y, 160);
     setTimeout(() => burst(x, y, 70, .8), 300);
@@ -429,5 +486,6 @@
     }
   });
 </script>
+<script src="https://www.youtube.com/iframe_api" async></script>
 </body>
 </html>
