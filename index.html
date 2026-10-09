@@ -17,7 +17,7 @@
     --gold: #ffd166;
     --ink: #3b2440;
     --lh: 2.2rem; /* altura da linha do papel da cartinha */
-    --pw: min(340px, calc(100vw - 40px)); /* largura do player da música */
+    --pw: min(240px, calc(100vw - 40px)); /* largura do player da música */
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
@@ -248,7 +248,7 @@
     -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
-    transform: translateY(calc(100% + 40px));
+    transform: translateY(calc(100% + 40px + env(safe-area-inset-bottom)));
     transition: transform .5s cubic-bezier(.2, .8, .2, 1);
   }
   .music.show { transform: none; }
@@ -258,8 +258,8 @@
   .music.mini .yt { width: 0; height: 0; }
   .music button { padding: .3rem .4rem; border: 0; background: none; color: #fff; font: 400 .95rem Poppins, system-ui, sans-serif; cursor: pointer; }
   /* enquanto o player está aberto, sobe a mensagem pra ele não cobrir o botão da cartinha */
-  #message { transition: padding .4s; }
-  body:has(.music.show:not(.mini)) #message { padding-bottom: calc(var(--pw) * 9 / 16 + 90px); }
+  #message, #letter-screen { transition: padding .4s; }
+  body:has(.music.show:not(.mini)) :is(#message, #letter-screen) { padding-bottom: calc(var(--pw) * 9 / 16 + 90px); }
 
   /* ---------- animações ---------- */
   @keyframes twinkle { from { opacity: .35; } to { opacity: .9; } }
@@ -435,16 +435,17 @@
   // ponytail: volume só funciona no desktop/Android; no iPhone o YouTube usa o volume do aparelho
   const SONG = '1aokooixKIo', VOLUME = 20;
   const music = $('#music'), musicToggle = $('#music-toggle');
-  let player;
+  let player, played = false;
   window.onYouTubeIframeAPIReady = () => {
     player = new YT.Player('yt-player', {
-      width: 340, height: 191, videoId: SONG,
+      width: 240, height: 135, videoId: SONG,
       playerVars: { playsinline: 1, loop: 1, playlist: SONG, rel: 0 },
       events: {
         // se ela abriu a caixa antes do player carregar, tenta tocar assim que ficar pronto
         onReady: () => { if (gift.classList.contains('open')) playMusic(); },
         onStateChange: e => {
-          if (e.data !== YT.PlayerState.PLAYING) return;
+          if (e.data !== YT.PlayerState.PLAYING || played) return; // só na 1ª vez, não a cada loop/play
+          played = true;
           musicToggle.textContent = '🎵 Sparks · Coldplay';
           setTimeout(() => music.classList.add('mini'), 3000);
         },
@@ -459,7 +460,7 @@
     player.setVolume(VOLUME);
     player.playVideo();
   }
-  musicToggle.addEventListener('click', () => music.classList.toggle('mini'));
+  musicToggle.addEventListener('click', () => played ? music.classList.toggle('mini') : playMusic());
 
   // ---------- roteiro ----------
   gift.addEventListener('click', () => {
